@@ -1,0 +1,53 @@
+local player = game.Players.LocalPlayer
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 300, 0, 200)
+frame.Position = UDim2.new(0.5, -150, 0.5, -100)
+frame.BackgroundColor3 = Color3.new(1, 1, 1)
+
+local function createLabel(parent, size, pos, text, color)
+    local label = Instance.new("TextLabel", parent)
+    label.Size = size
+    label.Position = pos
+    label.Text = text
+    label.TextColor3 = color
+    label.BackgroundTransparency = 1
+    label.TextScaled = true
+    return label
+end
+
+createLabel(frame, UDim2.new(1, 0, 0.2, 0), UDim2.new(), "Nhập Key", Color3.new(0, 0, 0))
+
+local inputBox = Instance.new("TextBox", frame)
+inputBox.Size = UDim2.new(1, 0, 0.2, 0)
+inputBox.Position = UDim2.new(0, 0, 0.2, 0)
+inputBox.PlaceholderText = "Nhập key ở đây"
+inputBox.TextScaled = true
+
+local submitButton = Instance.new("TextButton", frame)
+submitButton.Size = UDim2.new(1, 0, 0.2, 0)
+submitButton.Position = UDim2.new(0, 0, 0.4, 0)
+submitButton.Text = "Xác Nhận"
+submitButton.BackgroundColor3 = Color3.new(0, 0.78, 0)
+submitButton.TextColor3 = Color3.new(1, 1, 1)
+
+local errorLabel = createLabel(frame, UDim2.new(1, 0, 0.2, 0), UDim2.new(0, 0, 0.6, 0), "", Color3.new(1, 0, 0))
+
+submitButton.MouseButton1Click:Connect(function()
+    if inputBox.Text == "HAPPY_FAMILY" then
+        frame:Destroy()
+        
+        -- Tải mã từ URL mà không hiển thị
+        local success, err = pcall(function()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/Exunys/AirHub-V2/main/src/Main.lua"))()
+        end)
+
+        if not success then
+            warn("Đã có lỗi xảy ra: " .. err)
+        end
+    else
+        errorLabel.Text = "Key không đúng"
+        inputBox.Text = ""
+    end
+end)
