@@ -1,1 +1,104 @@
-loadstring(game:HttpGet("https://raw.githubusercontent.com/Exunys/AirHub-V2/main/src/Main.lua"))()
+local player = game.Players.LocalPlayer
+local camera = workspace.CurrentCamera
+
+local ScreenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+ScreenGui.ResetOnSpawn = false
+
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 200, 0, 100)
+Frame.Position = UDim2.new(0.5, -100, -0.2, -50)
+Frame.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
+Frame.BorderSizePixel = 2
+Frame.Parent = ScreenGui
+Frame.Draggable = true
+Frame.Active = true
+Frame.Visible = false
+
+local silentAimEnabled = false
+
+local ToggleButton = Instance.new("TextButton")
+ToggleButton.Size = UDim2.new(0.8, 0, 0.3, 0)
+ToggleButton.Position = UDim2.new(0.1, 0, 0.2, 0)
+ToggleButton.BackgroundColor3 = Color3.new(0.3, 0.6, 0.3)
+ToggleButton.Text = "Silent Aim: OFF"
+ToggleButton.TextColor3 = Color3.new(1, 1, 1)
+ToggleButton.Font = Enum.Font.SourceSansBold
+ToggleButton.TextSize = 18
+ToggleButton.Parent = Frame
+
+local CloseButton = Instance.new("TextButton")
+CloseButton.Size = UDim2.new(0.2, 0, 0.2, 0)
+CloseButton.Position = UDim2.new(0.8, 0, 0, 0)
+CloseButton.BackgroundColor3 = Color3.new(1, 0, 0)
+CloseButton.Text = "X"
+CloseButton.TextColor3 = Color3.new(1, 1, 1)
+CloseButton.Font = Enum.Font.SourceSansBold
+CloseButton.TextSize = 14
+CloseButton.Parent = Frame
+
+Frame.Visible = true
+Frame:TweenPosition(UDim2.new(0.5, -100, 0.5, -50), "Out", "Quad", 0.5, true)
+
+ToggleButton.MouseButton1Click:Connect(function()
+    silentAimEnabled = not silentAimEnabled
+    if silentAimEnabled then
+        ToggleButton.Text = "Silent Aim: ON"
+        ToggleButton.BackgroundColor3 = Color3.new(0, 0.6, 0)
+    else
+        ToggleButton.Text = "Silent Aim: OFF"
+        ToggleButton.BackgroundColor3 = Color3.new(0.6, 0, 0)
+    end
+end)
+
+CloseButton.MouseButton1Click:Connect(function()
+    Frame:TweenPosition(UDim2.new(0.5, -100, 1.2, 0), "In", "Quad", 0.5, true, function()
+        ScreenGui:Destroy()
+    end)
+end)
+
+local isRightMouseButtonHeld = false
+game:GetService("UserInputService").InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+        isRightMouseButtonHeld = true
+    end
+end)
+game:GetService("UserInputService").InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+        isRightMouseButtonHeld = false
+    end
+end)
+
+local function GetClosestPlayerToCrosshair()
+    local closestPlayer = nil
+    local closestScreenDistance = math.huge
+    local crosshairPosition = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2)
+
+    for _, otherPlayer in pairs(game.Players:GetPlayers()) do
+        if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local screenPoint, onScreen = camera:WorldToViewportPoint(otherPlayer.Character.HumanoidRootPart.Position)
+            if onScreen then
+                local screenPosition = Vector2.new(screenPoint.X, screenPoint.Y)
+                local screenDistance = (screenPosition - crosshairPosition).magnitude
+                if screenDistance < closestScreenDistance then
+                    closestScreenDistance = screenDistance
+                    closestPlayer = otherPlayer
+                end
+            end
+        end
+    end
+    return closestPlayer
+end
+
+local function AimAtPlayer()
+    if not silentAimEnabled or not isRightMouseButtonHeld then return end
+
+    local targetPlayer = GetClosestPlayerToCrosshair()
+    if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local targetPosition = targetPlayer.Character.HumanoidRootPart.Position
+        local lookAtPosition = Vector3.new(targetPosition.X, targetPosition.Y - 1.5, targetPosition.Z)
+        
+        camera.CFrame = CFrame.new(camera.CFrame.Position, lookAtPosition)
+    end
+end
+
+game:GetService("RunService").RenderStepped:Connect(AimAtPlayer)
