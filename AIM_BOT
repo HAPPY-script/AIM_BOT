@@ -1,3 +1,8 @@
+game.StarterGui:SetCore("SendNotification", {
+    Title = "created by HAPPY script";
+    Text = "aim player";
+    Duration = 5;
+})
 local player = game.Players.LocalPlayer
 local camera = workspace.CurrentCamera
 
@@ -68,18 +73,19 @@ game:GetService("UserInputService").InputEnded:Connect(function(input)
     end
 end)
 
-local function GetClosestPlayerToCrosshair()
+local function GetClosestPlayerHeadInRange()
     local closestPlayer = nil
     local closestScreenDistance = math.huge
     local crosshairPosition = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2)
+    local maxRadius = 200  -- Bán kính tối đa tính từ tâm nhắm
 
     for _, otherPlayer in pairs(game.Players:GetPlayers()) do
-        if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            local screenPoint, onScreen = camera:WorldToViewportPoint(otherPlayer.Character.HumanoidRootPart.Position)
+        if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("Head") then
+            local screenPoint, onScreen = camera:WorldToViewportPoint(otherPlayer.Character.Head.Position)
             if onScreen then
                 local screenPosition = Vector2.new(screenPoint.X, screenPoint.Y)
                 local screenDistance = (screenPosition - crosshairPosition).magnitude
-                if screenDistance < closestScreenDistance then
+                if screenDistance < closestScreenDistance and screenDistance <= maxRadius then
                     closestScreenDistance = screenDistance
                     closestPlayer = otherPlayer
                 end
@@ -89,16 +95,14 @@ local function GetClosestPlayerToCrosshair()
     return closestPlayer
 end
 
-local function AimAtPlayer()
+local function AimAtPlayerHead()
     if not silentAimEnabled or not isRightMouseButtonHeld then return end
 
-    local targetPlayer = GetClosestPlayerToCrosshair()
-    if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        local targetPosition = targetPlayer.Character.HumanoidRootPart.Position
-        local lookAtPosition = Vector3.new(targetPosition.X, targetPosition.Y - 1.5, targetPosition.Z)
-        
-        camera.CFrame = CFrame.new(camera.CFrame.Position, lookAtPosition)
+    local targetPlayer = GetClosestPlayerHeadInRange()
+    if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("Head") then
+        local targetPosition = targetPlayer.Character.Head.Position
+        camera.CFrame = CFrame.new(camera.CFrame.Position, targetPosition)
     end
 end
 
-game:GetService("RunService").RenderStepped:Connect(AimAtPlayer)
+game:GetService("RunService").RenderStepped:Connect(AimAtPlayerHead)
