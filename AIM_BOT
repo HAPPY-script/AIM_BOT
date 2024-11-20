@@ -3,11 +3,6 @@ game.StarterGui:SetCore("SendNotification", {
     Text = "aim player";
     Duration = 5;
 })
-game.StarterGui:SetCore("SendNotification", {
-    Title = "created by HAPPY script";
-    Text = "aim player";
-    Duration = 5;
-})
 local player = game.Players.LocalPlayer
 local camera = workspace.CurrentCamera
 
