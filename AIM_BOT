@@ -3,6 +3,11 @@ game.StarterGui:SetCore("SendNotification", {
     Text = "aim player";
     Duration = 5;
 })
+game.StarterGui:SetCore("SendNotification", {
+    Title = "created by HAPPY script";
+    Text = "aim player";
+    Duration = 5;
+})
 local player = game.Players.LocalPlayer
 local camera = workspace.CurrentCamera
 
@@ -10,8 +15,8 @@ local ScreenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 ScreenGui.ResetOnSpawn = false
 
 local Frame = Instance.new("Frame")
-Frame.Size = UDim2.new(0, 200, 0, 100)
-Frame.Position = UDim2.new(0.5, -100, -0.2, -50)
+Frame.Size = UDim2.new(0, 250, 0, 150)
+Frame.Position = UDim2.new(0.5, -125, -0.2, -75)
 Frame.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
 Frame.BorderSizePixel = 2
 Frame.Parent = ScreenGui
@@ -20,16 +25,27 @@ Frame.Active = true
 Frame.Visible = false
 
 local silentAimEnabled = false
+local selectedKey = nil
 
 local ToggleButton = Instance.new("TextButton")
-ToggleButton.Size = UDim2.new(0.8, 0, 0.3, 0)
-ToggleButton.Position = UDim2.new(0.1, 0, 0.2, 0)
+ToggleButton.Size = UDim2.new(0.8, 0, 0.2, 0)
+ToggleButton.Position = UDim2.new(0.1, 0, 0.1, 0)
 ToggleButton.BackgroundColor3 = Color3.new(0.3, 0.6, 0.3)
 ToggleButton.Text = "Silent Aim: OFF"
 ToggleButton.TextColor3 = Color3.new(1, 1, 1)
 ToggleButton.Font = Enum.Font.SourceSansBold
 ToggleButton.TextSize = 18
 ToggleButton.Parent = Frame
+
+local KeyInputButton = Instance.new("TextButton")
+KeyInputButton.Size = UDim2.new(0.8, 0, 0.2, 0)
+KeyInputButton.Position = UDim2.new(0.1, 0, 0.4, 0)
+KeyInputButton.BackgroundColor3 = Color3.new(0.3, 0.3, 0.6)
+KeyInputButton.Text = "Set Key: None"
+KeyInputButton.TextColor3 = Color3.new(1, 1, 1)
+KeyInputButton.Font = Enum.Font.SourceSansBold
+KeyInputButton.TextSize = 18
+KeyInputButton.Parent = Frame
 
 local CloseButton = Instance.new("TextButton")
 CloseButton.Size = UDim2.new(0.2, 0, 0.2, 0)
@@ -42,8 +58,9 @@ CloseButton.TextSize = 14
 CloseButton.Parent = Frame
 
 Frame.Visible = true
-Frame:TweenPosition(UDim2.new(0.5, -100, 0.5, -50), "Out", "Quad", 0.5, true)
+Frame:TweenPosition(UDim2.new(0.5, -125, 0.5, -75), "Out", "Quad", 0.5, true)
 
+-- Chức năng bật/tắt Silent Aim
 ToggleButton.MouseButton1Click:Connect(function()
     silentAimEnabled = not silentAimEnabled
     if silentAimEnabled then
@@ -55,24 +72,45 @@ ToggleButton.MouseButton1Click:Connect(function()
     end
 end)
 
+-- Chức năng đóng menu
 CloseButton.MouseButton1Click:Connect(function()
-    Frame:TweenPosition(UDim2.new(0.5, -100, 1.2, 0), "In", "Quad", 0.5, true, function()
+    Frame:TweenPosition(UDim2.new(0.5, -125, 1.2, 0), "In", "Quad", 0.5, true, function()
         ScreenGui:Destroy()
     end)
 end)
 
-local isRightMouseButtonHeld = false
-game:GetService("UserInputService").InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton2 then
-        isRightMouseButtonHeld = true
-    end
+-- Chọn phím kích hoạt
+local settingKey = false
+KeyInputButton.MouseButton1Click:Connect(function()
+    settingKey = true
+    KeyInputButton.Text = "Press Any Key..."
 end)
-game:GetService("UserInputService").InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton2 then
-        isRightMouseButtonHeld = false
+
+game:GetService("UserInputService").InputBegan:Connect(function(input)
+    if settingKey then
+        if input.UserInputType == Enum.UserInputType.Keyboard or input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.MouseButton2 then
+            selectedKey = input.KeyCode or input.UserInputType
+            KeyInputButton.Text = "Set Key: " .. (selectedKey.Name or tostring(selectedKey))
+            settingKey = false
+        end
     end
 end)
 
+-- Kiểm tra trạng thái giữ phím
+local isKeyHeld = false
+game:GetService("UserInputService").InputBegan:Connect(function(input)
+    if input.KeyCode == selectedKey or input.UserInputType == selectedKey then
+        isKeyHeld = true
+    end
+end)
+
+game:GetService("UserInputService").InputEnded:Connect(function(input)
+    if input.KeyCode == selectedKey or input.UserInputType == selectedKey then
+        isKeyHeld = false
+    end
+end)
+
+-- Tìm người chơi gần nhất trong phạm vi
 local function GetClosestPlayerHeadInRange()
     local closestPlayer = nil
     local closestScreenDistance = math.huge
@@ -95,8 +133,9 @@ local function GetClosestPlayerHeadInRange()
     return closestPlayer
 end
 
+-- Tự động nhắm vào đầu người chơi
 local function AimAtPlayerHead()
-    if not silentAimEnabled or not isRightMouseButtonHeld then return end
+    if not silentAimEnabled or not isKeyHeld then return end
 
     local targetPlayer = GetClosestPlayerHeadInRange()
     if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("Head") then
