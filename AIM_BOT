@@ -11,13 +11,44 @@ ScreenGui.ResetOnSpawn = false
 
 local Frame = Instance.new("Frame")
 Frame.Size = UDim2.new(0, 250, 0, 150)
-Frame.Position = UDim2.new(0.5, -125, -0.2, -75)
+Frame.Position = UDim2.new(0.5, -125, 0.5, -75)
 Frame.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
 Frame.BorderSizePixel = 2
 Frame.Parent = ScreenGui
-Frame.Draggable = true
-Frame.Active = true
 Frame.Visible = false
+
+local dragging = false
+local dragStart = nil
+local startPos = nil
+local smoothSpeed = 0.12 -- Độ trượt mượt
+local UserInputService = game:GetService("UserInputService")
+
+-- Kéo menu
+Frame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = Frame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position - dragStart
+        local goalPosition = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+        Frame:TweenPosition(goalPosition, "Out", "Quad", smoothSpeed, true)
+    end
+end)
 
 local silentAimEnabled = false
 local selectedKey = nil
